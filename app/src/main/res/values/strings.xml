@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Hal</string>
+
+    <string name="my_current_location_text">Go to my location</string>
+    <string name="btn_text_view_on_map">Find Me on Map</string>
+
+    <string name="image_contentDescription">image</string>
+    <string name="miles_per_hour">miles/hour</string>
+    <string name="action_refresh">Refresh</string>
+</resources>
