@@ -9,7 +9,7 @@ import com.sandbox.myhal.models.PlayerModel
 import com.sandbox.myhal.models.Speech
 import kotlinx.android.synthetic.main.activity_introduction.*
 
-class IntroductionActivity : AppCompatActivity() {
+class IntroductionActivity : BaseActivity() {
 
     private var mPlayerDetails: PlayerModel? = null
     private var currentIndex = 0

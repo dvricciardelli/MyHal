@@ -2,16 +2,14 @@ package com.sandbox.myhal.activities
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Typeface
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import android.location.Location
-import android.location.LocationManager
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
@@ -20,20 +18,23 @@ import android.util.Log
 import android.view.WindowManager
 import android.widget.Toast
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.SupportMapFragment
+import com.google.gson.Gson
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionRequest
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
 import com.sandbox.myhal.R
+import com.sandbox.myhal.repository.FirestoreCustomerRepository
 import com.sandbox.myhal.models.PlayerModel
+import com.sandbox.myhal.utils.Constants
 import kotlinx.android.synthetic.main.activity_splash.*
 
 
 class SplashActivity : AppCompatActivity() {
 
     private lateinit var mFusedLocationClient : FusedLocationProviderClient
+    private lateinit var mSharedPreferences: SharedPreferences
     private var mPlayerDetails: PlayerModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,7 +50,7 @@ class SplashActivity : AppCompatActivity() {
         tv_app_name.typeface = typeFace
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
+        mSharedPreferences = getSharedPreferences(Constants.PREFERENCE_NAME, Context.MODE_PRIVATE)
 
             Dexter.withActivity(this)
                 .withPermissions(
@@ -61,10 +62,22 @@ class SplashActivity : AppCompatActivity() {
                         if (report!!.areAllPermissionsGranted()) {
                             requestNewLocationData()
                             Handler().postDelayed({
-                                val intent = Intent(this@SplashActivity, IntroductionActivity::class.java)
-                                intent.putExtra(SplashActivity.EXTRA_PLAYER_DETAILS, mPlayerDetails)
-                                startActivity(intent)
+
+                                val playerDetail = Gson().toJson(mPlayerDetails)
+                                val editor = mSharedPreferences.edit()
+                                editor.putString(Constants.PLAYER_POSITION_DATA, playerDetail)
+                                editor.apply()
+
+                                var currentUserId = FirestoreCustomerRepository().getCurrentUserId()
+
+                                if(!currentUserId.isNotEmpty()){
+                                    startActivity(Intent(this@SplashActivity, AuthActivity::class.java))
+                                } else {
+                                    startActivity(Intent(this@SplashActivity, AuthActivity::class.java))
+                                }
+
                                 finish()
+
                             }, 2500)
                         }
 

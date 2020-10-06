@@ -8,9 +8,8 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import com.google.gson.Gson
-import com.sandbox.myhal.Constants
+import com.sandbox.myhal.utils.Constants
 import com.sandbox.myhal.R
-import com.sandbox.myhal.models.PlayerModel
 import com.sandbox.weatherapp.models.WeatherResponse
 import com.sandbox.weatherapp.network.WeatherService
 import kotlinx.android.synthetic.main.activity_weather.*
@@ -49,6 +48,7 @@ class WeatherActivity : AppCompatActivity() {
 
     private fun getLocationWeatherDetails(latitude: Double, longitude: Double){
         if(Constants.isNetworkAvailable(this)){
+            //TODO: Activity doesn't need to know about Retrofit or json
             val retrofit: Retrofit = Retrofit.Builder()
                 .baseUrl(Constants.BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
@@ -86,6 +86,7 @@ class WeatherActivity : AppCompatActivity() {
                     } else {
                         // If the response is not success then we check the response code.
                         val sc = response.code()
+                        //TODO: Make it reusable.  Doesn't need to parse response.
                         when (sc) {
                             400 -> {
                                 Log.e("Error 400", "Bad Request")
@@ -142,7 +143,7 @@ class WeatherActivity : AppCompatActivity() {
                 tv_max.text = weatherList.main.tempMax.toString() + " max"
                 tv_name.text = weatherList.name
                 tv_country.text = weatherList.sys.country
-
+                //TODO: Think view model, display the same but fetch different data
                 when (weatherList.weather[i].icon) {
                     "01d" -> iv_main.setImageResource(R.drawable.sunny)
                     "02d" -> iv_main.setImageResource(R.drawable.cloud)

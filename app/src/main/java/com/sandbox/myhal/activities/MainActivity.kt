@@ -1,6 +1,7 @@
 package com.sandbox.myhal.activities
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
@@ -13,7 +14,8 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.sandbox.myhal.Constants
+import com.google.gson.Gson
+import com.sandbox.myhal.utils.Constants
 import com.sandbox.myhal.R
 import com.sandbox.myhal.models.PlayerModel
 import com.sandbox.weatherapp.models.WeatherResponse
@@ -24,16 +26,17 @@ import retrofit.*
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private var mPlayerDetails: PlayerModel? = null
-
+    private lateinit var mSharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        if(intent.hasExtra(SplashActivity.EXTRA_PLAYER_DETAILS)){
-            mPlayerDetails =
-                intent.getSerializableExtra(SplashActivity.EXTRA_PLAYER_DETAILS)
-                        as PlayerModel
+        mSharedPreferences = getSharedPreferences(Constants.PREFERENCE_NAME, Context.MODE_PRIVATE)
+        val playerLocationJsonString = mSharedPreferences.getString(Constants.PLAYER_POSITION_DATA, "")
+
+        if(!playerLocationJsonString.isNullOrEmpty()){
+            mPlayerDetails = Gson().fromJson(playerLocationJsonString, PlayerModel::class.java)
         }
 
         if(mPlayerDetails != null){
