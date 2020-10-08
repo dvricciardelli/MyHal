@@ -49,6 +49,10 @@ class FirestoreCustomerRepository : CustomerRepository {
 
     }
 
+    override fun isLoggedIn(): Boolean {
+        return getCurrentUserId() != null
+    }
+
     private fun saveUser(){
 
     }

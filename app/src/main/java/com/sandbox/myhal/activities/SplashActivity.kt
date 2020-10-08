@@ -27,6 +27,9 @@ import com.karumi.dexter.listener.multi.MultiplePermissionsListener
 import com.sandbox.myhal.R
 import com.sandbox.myhal.repository.FirestoreCustomerRepository
 import com.sandbox.myhal.models.PlayerModel
+import com.sandbox.myhal.models.User
+import com.sandbox.myhal.repository.CustomerCatalog
+import com.sandbox.myhal.repository.CustomerFactory
 import com.sandbox.myhal.utils.Constants
 import kotlinx.android.synthetic.main.activity_splash.*
 
@@ -68,9 +71,10 @@ class SplashActivity : AppCompatActivity() {
                                 editor.putString(Constants.PLAYER_POSITION_DATA, playerDetail)
                                 editor.apply()
 
-                                var currentUserId = FirestoreCustomerRepository().getCurrentUserId()
+                                val mCustomerRepository = CustomerFactory.create()
+                                val mCustomerCatalog = CustomerCatalog(mCustomerRepository)
 
-                                if(!currentUserId.isNotEmpty()){
+                                if(mCustomerCatalog.isLoggedIn()){
                                     startActivity(Intent(this@SplashActivity, MainActivity::class.java))
                                 } else {
                                     startActivity(Intent(this@SplashActivity, AuthActivity::class.java))

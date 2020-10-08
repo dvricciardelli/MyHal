@@ -16,5 +16,10 @@ class CustomerCatalog(customerRepository: CustomerRepository) {
         mCustomerRepository.signInUser(activity, userInfo, password)
     }
 
+    fun isLoggedIn(): Boolean {
+        return mCustomerRepository.isLoggedIn()
+
+    }
+
 
 }

@@ -8,5 +8,6 @@ interface CustomerRepository {
 
     fun signInUser(activity: SignInActivity, userInfo: User, password: String)
     fun registerUser(activity: SignUpActivity, userInfo: User, password: String)
+    fun isLoggedIn(): Boolean
 
 }
