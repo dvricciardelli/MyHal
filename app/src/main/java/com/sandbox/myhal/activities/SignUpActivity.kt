@@ -55,30 +55,14 @@ class SignUpActivity : BaseActivity() {
         }
 
         if (validateForm(name, email, password)) {
+
             showProgressDialog(resources.getString(R.string.please_wait))
             val mCustomerRepository = CustomerFactory.create()
             val mCustomerCatalog = CustomerCatalog(mCustomerRepository)
 
             val user = User( name=name, email=email)
             mCustomerCatalog.registerUser(this, user, password)
-            /*FirebaseAuth.getInstance()
-                .createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->
 
-                    if (task.isSuccessful) {
-                        val firebaseUser: FirebaseUser = task.result!!.user!!
-                        val registeredEmail = firebaseUser.email!!
-
-                        val user = User(firebaseUser.uid, name, registeredEmail)
-                        FirestoreClass().registerUser(this, user)
-                    } else {
-                        Toast.makeText(
-                            this,
-                            task.exception!!.message,
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-
-                }*/
         }
     }
 

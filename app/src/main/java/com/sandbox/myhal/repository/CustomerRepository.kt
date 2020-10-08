@@ -6,7 +6,7 @@ import com.sandbox.myhal.models.User
 
 interface CustomerRepository {
 
-    fun signInUser(activity: SignInActivity)
+    fun signInUser(activity: SignInActivity, userInfo: User, password: String)
     fun registerUser(activity: SignUpActivity, userInfo: User, password: String)
 
 }

@@ -10,6 +10,8 @@ import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 import com.sandbox.myhal.R
 import com.sandbox.myhal.models.User
+import com.sandbox.myhal.repository.CustomerCatalog
+import com.sandbox.myhal.repository.CustomerFactory
 import kotlinx.android.synthetic.main.activity_sign_in.*
 
 
@@ -29,7 +31,7 @@ class SignInActivity : BaseActivity() {
         )
 
         btn_sign_in.setOnClickListener{
-            signInRegisterdUser()
+            signInRegisteredUser()
         }
 
         setupActionBar()
@@ -53,7 +55,7 @@ class SignInActivity : BaseActivity() {
         toolbar_sign_in_activity.setNavigationOnClickListener { onBackPressed() }
     }
 
-    private fun signInRegisterdUser(){
+    private fun signInRegisteredUser(){
         val email: String = et_email_sign_in.text.toString().trim {
             it <= ' '
         }
@@ -64,7 +66,12 @@ class SignInActivity : BaseActivity() {
 
         if(validateForm(email,password)){
             showProgressDialog(resources.getString(R.string.please_wait))
-            //customerRepository.signUpUser
+
+            val mCustomerRepository = CustomerFactory.create()
+            val mCustomerCatalog = CustomerCatalog(mCustomerRepository)
+
+            val user = User( email=email)
+            mCustomerCatalog.signInUser(this, user, password)
 
             auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this) { task ->

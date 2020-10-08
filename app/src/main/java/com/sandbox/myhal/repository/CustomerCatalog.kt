@@ -12,8 +12,8 @@ class CustomerCatalog(customerRepository: CustomerRepository) {
         mCustomerRepository.registerUser(activity, userInfo, password)
     }
 
-    fun signInUser(activity: SignInActivity){
-        mCustomerRepository.signInUser(activity)
+    fun signInUser(activity: SignInActivity, userInfo: User, password: String){
+        mCustomerRepository.signInUser(activity, userInfo, password)
     }
 
 
