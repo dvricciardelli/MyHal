@@ -31,6 +31,7 @@ class FirestoreCustomerRepository : CustomerRepository {
                     .document(getCurrentUserId())
                     .set(user, SetOptions.merge())
                     .addOnSuccessListener {
+                        FirebaseAuth.getInstance().signOut()
                         activity.userRegisteredSuccess()
                     }.addOnFailureListener{
                             e ->
@@ -38,11 +39,7 @@ class FirestoreCustomerRepository : CustomerRepository {
                     }
                 //saveUser(user)
             } else {
-                Toast.makeText(
-                    activity,
-                    task.exception!!.message,
-                    Toast.LENGTH_SHORT
-                ).show()
+                activity.userRegisteredUnSuccessful(task.exception!!.message.toString())
             }
 
         }
@@ -51,6 +48,7 @@ class FirestoreCustomerRepository : CustomerRepository {
 
     override fun isLoggedIn(): Boolean {
         return getCurrentUserId() != null
+        //return false
     }
 
     private fun saveUser(){
@@ -81,15 +79,13 @@ class FirestoreCustomerRepository : CustomerRepository {
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w("Sign In", "signInWithEmail:failure", task.exception)
-                    Toast.makeText(activity, "Authentication failed.",
-                        Toast.LENGTH_SHORT).show()
-
+                    activity.signInUnSuccessful("Authentication failed.")
                 }
             }
 
     }
 
-    fun getCurrentUserId(): String{
+    private fun getCurrentUserId(): String{
         var currentUser = FirebaseAuth.getInstance().currentUser
         var currentUserId = ""
 

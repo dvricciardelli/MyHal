@@ -75,7 +75,7 @@ class SplashActivity : AppCompatActivity() {
                                 val mCustomerCatalog = CustomerCatalog(mCustomerRepository)
 
                                 if(mCustomerCatalog.isLoggedIn()){
-                                    startActivity(Intent(this@SplashActivity, MainActivity::class.java))
+                                    startActivity(Intent(this@SplashActivity, AuthActivity::class.java))
                                 } else {
                                     startActivity(Intent(this@SplashActivity, AuthActivity::class.java))
                                 }

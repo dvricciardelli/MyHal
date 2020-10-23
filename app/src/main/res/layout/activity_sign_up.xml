@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -7,6 +8,8 @@
     android:background="@drawable/ic_background"
     android:orientation="vertical"
     tools:context=".activities.SignUpActivity">
+
+
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/toolbar_sign_up_activity"
