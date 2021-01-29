@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-
+<layout>
+    <data>
+        <variable name="viewModel" type="com.sandbox.myhal.viewmodels.FormViewModel" />
+    </data>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -71,6 +74,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/name"
+                        android:text="@={viewModel.firstName}"
                         android:inputType="textEmailAddress"
                         android:textSize="@dimen/et_text_size" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -87,6 +91,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/email"
+                        android:text="@={viewModel.emailAddress}"
                         android:inputType="textEmailAddress"
                         android:textSize="@dimen/et_text_size" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -103,6 +108,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="@string/password"
+                        android:text="@={viewModel.password}"
                         android:inputType="textPassword"
                         android:textSize="16sp" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -122,8 +128,10 @@
                     android:paddingBottom="@dimen/btn_paddingTopBottom"
                     android:text="@string/sign_up"
                     android:textColor="@android:color/white"
-                    android:textSize="@dimen/btn_text_size" />
+                    android:textSize="@dimen/btn_text_size"
+                    android:enabled="@{viewModel.valid}" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
     </LinearLayout>
 </LinearLayout>
+</layout>

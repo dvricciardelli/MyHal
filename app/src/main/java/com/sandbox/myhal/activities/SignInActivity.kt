@@ -10,7 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.sandbox.myhal.R
 import com.sandbox.myhal.models.User
 import com.sandbox.myhal.repository.CustomerCatalog
-import com.sandbox.myhal.repository.CustomerFactory
+import com.sandbox.myhal.repository.DataFactory
 import com.sandbox.myhal.viewmodels.SignInViewModel
 import kotlinx.android.synthetic.main.activity_sign_in.*
 
@@ -40,7 +40,7 @@ class SignInActivity : BaseActivity() {
         setupActionBar()
     }
 
-    fun signInSuccess(user: User){
+    override fun receiveUserData(user: User){
         hideProgressDialog()
         startActivity(Intent(this, IntroductionActivity::class.java))
         finish()
@@ -63,7 +63,7 @@ class SignInActivity : BaseActivity() {
         if(viewModel.validateForm()){
             showProgressDialog(resources.getString(R.string.please_wait))
 
-            val mCustomerRepository = CustomerFactory.create()
+            val mCustomerRepository = DataFactory.createCustomer()
             val mCustomerCatalog = CustomerCatalog(mCustomerRepository)
 
             val user = User( email = viewModel.emailAddress)

@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.google.android.material.snackbar.Snackbar
 import com.sandbox.myhal.R
+import com.sandbox.myhal.models.User
 import kotlinx.android.synthetic.main.dialog_progress.*
 
 open class BaseActivity : AppCompatActivity() {
@@ -17,7 +18,6 @@ open class BaseActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_base)
     }
 
     fun showProgressDialog(text: String){
@@ -65,4 +65,10 @@ open class BaseActivity : AppCompatActivity() {
 
         snackBar.show()
     }
+
+    open fun receiveUserData(user: User){
+
+    }
+
+
 }

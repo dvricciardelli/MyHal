@@ -1,32 +1,49 @@
 package com.sandbox.myhal.activities
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.MenuItem
 import android.widget.Toast
+import androidx.core.view.GravityCompat
+import com.bumptech.glide.Glide
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.navigation.NavigationView
 import com.google.gson.Gson
 import com.sandbox.myhal.utils.Constants
 import com.sandbox.myhal.R
 import com.sandbox.myhal.models.PlayerModel
+import com.sandbox.myhal.models.User
+import com.sandbox.myhal.repository.CustomerCatalog
+import com.sandbox.myhal.repository.DataFactory
 import com.sandbox.weatherapp.models.WeatherResponse
 import com.sandbox.weatherapp.network.WeatherService
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.main_content.*
+import kotlinx.android.synthetic.main.nav_header_main.*
 import retrofit.*
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+class MainActivity : BaseActivity(), OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
+
+    companion object{
+        const val MY_PROFILE_REQUEST_CODE: Int = 1
+    }
 
     private var mPlayerDetails: PlayerModel? = null
     private lateinit var mSharedPreferences: SharedPreferences
+    private lateinit var mUser: User
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,6 +51,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         mSharedPreferences = getSharedPreferences(Constants.PREFERENCE_NAME, Context.MODE_PRIVATE)
         val playerLocationJsonString = mSharedPreferences.getString(Constants.PLAYER_POSITION_DATA, "")
+
+        val mCustomerRepository = DataFactory.createCustomer()
+        val mCustomerCatalog = CustomerCatalog(mCustomerRepository)
+        mCustomerCatalog.loadUserData(this)
 
         if(!playerLocationJsonString.isNullOrEmpty()){
             mPlayerDetails = Gson().fromJson(playerLocationJsonString, PlayerModel::class.java)
@@ -54,6 +75,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         }
 
+        fabViewProfile.setOnClickListener{
+            toggleDrawer()
+        }
+
+        nav_view.setNavigationItemSelectedListener(this)
+
     }
 
     override fun onMapReady(googleMap: GoogleMap?) {
@@ -63,63 +90,81 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         googleMap.animateCamera(newLatLngZoom)
     }
 
-    private fun getLocationWeatherDetails(latitude: Double, longitude: Double){
-        if(Constants.isNetworkAvailable(this)){
-            val retrofit: Retrofit = Retrofit.Builder()
-                .baseUrl(Constants.BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
+    fun createLocationRequest() {
+        val locationRequest = LocationRequest.create().apply {
+            interval = 10000
+            fastestInterval = 5000
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        }
 
-            val service: WeatherService = retrofit
-                .create<WeatherService>(WeatherService::class.java)
+        val builder = LocationSettingsRequest.Builder()
+            .addLocationRequest(locationRequest)
+    }
 
-            val listCall: Call<WeatherResponse> = service.getWeather(
-                latitude, longitude, Constants.METRIC_UNIT, Constants.APP_ID
-            )
-
-            listCall.enqueue(object : Callback<WeatherResponse> {
-                @SuppressLint("SetTextI18n")
-                override fun onResponse(
-                    response: Response<WeatherResponse>,
-                    retrofit: Retrofit
-                ) {
-
-                    // Check weather the response is success or not.
-                    if (response.isSuccess) {
-
-                        /** The de-serialized response body of a successful response. */
-                        val weatherList: WeatherResponse = response.body()
-                        Log.i("Response Result", "$weatherList")
-                    } else {
-                        // If the response is not success then we check the response code.
-                        val sc = response.code()
-                        when (sc) {
-                            400 -> {
-                                Log.e("Error 400", "Bad Request")
-                            }
-                            404 -> {
-                                Log.e("Error 404", "Not Found")
-                            }
-                            else -> {
-                                Log.e("Error", "Generic Error")
-                            }
-                        }
-                    }
-                }
-
-                override fun onFailure(t: Throwable) {
-                    Log.e("Errorrrrr", t.message.toString())
-                }
-            })
-
+    private fun toggleDrawer(){
+        if(drawer_layout.isDrawerOpen((GravityCompat.START))){
+            drawer_layout.closeDrawer(GravityCompat.START)
         } else {
-            Toast.makeText(
-                this@MainActivity,
-                "No internet connection available",
-                Toast.LENGTH_SHORT
-            ).show()
+            drawer_layout.openDrawer(GravityCompat.START)
         }
     }
 
+    override fun onBackPressed() {
+        if(drawer_layout.isDrawerOpen((GravityCompat.START))){
+            drawer_layout.closeDrawer(GravityCompat.START)
+        } else {
+            drawer_layout.openDrawer(GravityCompat.START)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(resultCode == Activity.RESULT_OK
+            && requestCode == MY_PROFILE_REQUEST_CODE){
+
+            val mCustomerRepository = DataFactory.createCustomer()
+            val mCustomerCatalog = CustomerCatalog(mCustomerRepository)
+            mCustomerCatalog.loadUserData(this)
+        } else {
+            Log.e("Cancelled", "Cancelled")
+        }
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when(item.itemId) {
+            R.id.nav_my_profile -> {
+                startActivityForResult(Intent(this@MainActivity,
+                    MyProfileActivity::class.java),
+                    MY_PROFILE_REQUEST_CODE)
+            }
+            R.id.nav_sign_out -> {
+                val mCustomerRepository = DataFactory.createCustomer()
+                val mCustomerCatalog = CustomerCatalog(mCustomerRepository)
+                mCustomerCatalog.signOut()
+                val intent = Intent(this, AuthActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                startActivity(intent)
+                finish()
+            }
+            R.id.nav_board -> {
+                val intent = Intent(this@MainActivity, BoardActivity::class.java)
+                startActivity(intent)
+
+            }
+        }
+        drawer_layout.closeDrawer(GravityCompat.START)
+        return true
+    }
+
+    override fun receiveUserData(user: User){
+        Glide
+            .with(this)
+            .load(user.image)
+            .centerCrop()
+            .placeholder(R.drawable.ic_user_place_holder)
+            .into(iv_user_image)
+        tv_username.text = user.name
+        mUser = user
+    }
 
 }
