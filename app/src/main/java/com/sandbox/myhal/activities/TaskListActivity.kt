@@ -1,8 +1,10 @@
 package com.sandbox.myhal.activities
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.provider.SyncStateContract
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -11,8 +13,10 @@ import com.sandbox.myhal.adapters.TaskListItemsAdapter
 import com.sandbox.myhal.models.Board
 import com.sandbox.myhal.models.Card
 import com.sandbox.myhal.models.Task
+import com.sandbox.myhal.models.User
 
 import com.sandbox.myhal.repository.BoardCatalog
+import com.sandbox.myhal.repository.CustomerCatalog
 import com.sandbox.myhal.repository.DataFactory
 import com.sandbox.myhal.utils.Constants
 import kotlinx.android.synthetic.main.activity_my_profile.*
@@ -24,20 +28,25 @@ class TaskListActivity : BaseActivity() {
     val mBoardRepository = DataFactory.createBoard()
     val mBoardCatalog = BoardCatalog(mBoardRepository)
 
+    val mCustomerRepository = DataFactory.createCustomer()
+    val mCustomerCatalog = CustomerCatalog(mCustomerRepository)
+
     private lateinit var mBoardDetails: Board
+    private lateinit var mBoardDocumentId: String
+    lateinit var mAssignedMemberDetailList: ArrayList<User>
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_task_list)
 
-        var boardDocumentId = ""
+
         if(intent.hasExtra(Constants.DOCUMENT_ID)){
-            boardDocumentId = intent.getStringExtra(Constants.DOCUMENT_ID)
+            mBoardDocumentId = intent.getStringExtra(Constants.DOCUMENT_ID)
         }
 
         showProgressDialog(resources.getString(R.string.please_wait))
-
-        mBoardCatalog.getBoardDetails(this@TaskListActivity, boardDocumentId)
+        mBoardCatalog.getBoardDetails(this@TaskListActivity, mBoardDocumentId)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -51,10 +60,32 @@ class TaskListActivity : BaseActivity() {
             R.id.action_members -> {
                 val intent = Intent(this, MembersActivity::class.java)
                 intent.putExtra(Constants.BOARD_DETAIL, mBoardDetails)
-                startActivity(intent)
+                startActivityForResult(intent, MEMBER_REQUEST_CODE)
+                return true
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(resultCode == Activity.RESULT_OK
+            && requestCode == MEMBER_REQUEST_CODE
+            || requestCode == CARD_DETAILS_REQUEST_CODE){
+            showProgressDialog(resources.getString(R.string.please_wait))
+            mBoardCatalog.getBoardDetails(this@TaskListActivity, mBoardDocumentId)
+        } else {
+            Log.e("Cancelled", "Cancelled")
+        }
+    }
+
+    fun cardDetails(taskListPosition: Int, cardPosition: Int){
+        val intent = Intent(this, CardDetailsActivity::class.java)
+        intent.putExtra(Constants.BOARD_DETAIL,mBoardDetails)
+        intent.putExtra(Constants.TASK_LIST_ITEM_POSITION, taskListPosition)
+        intent.putExtra(Constants.CARD_LIST_ITEM_POSITION, cardPosition)
+        intent.putExtra(Constants.BOARD_MEMBERS_LIST, mAssignedMemberDetailList)
+        startActivityForResult(intent, CARD_DETAILS_REQUEST_CODE)
     }
 
     private fun setupActionBar(){
@@ -75,15 +106,10 @@ class TaskListActivity : BaseActivity() {
         hideProgressDialog()
         setupActionBar()
 
-        val addTaskList = Task(resources.getString(R.string.add_list))
-        board.taskList.add(addTaskList)
 
-        rv_task_list.layoutManager = LinearLayoutManager(
-            this, LinearLayoutManager.HORIZONTAL, false)
 
-        rv_task_list.setHasFixedSize(true)
-        val adapter = TaskListItemsAdapter(this, board.taskList)
-        rv_task_list.adapter = adapter
+        showProgressDialog(resources.getString(R.string.please_wait))
+        mCustomerCatalog.getAssignedMembersListDetails(this, mBoardDetails.assignedTo)
     }
 
     fun addUpdateTaskListSuccess(){
@@ -94,7 +120,7 @@ class TaskListActivity : BaseActivity() {
     }
 
     fun createTaskList(taskListName: String){
-        val task = Task(taskListName, mBoardDetails.assignedTo[0])
+        val task = Task(taskListName, mCustomerCatalog.getCurrentUserId())
         mBoardDetails.taskList.add(0, task)
         mBoardDetails.taskList.removeAt(mBoardDetails.taskList.size - 1)
 
@@ -124,9 +150,9 @@ class TaskListActivity : BaseActivity() {
         mBoardDetails.taskList.removeAt(mBoardDetails.taskList.size-1)
 
         val cardAssignedUserList: ArrayList<String> = ArrayList()
-        cardAssignedUserList.add(mBoardDetails.assignedTo[0])
+        cardAssignedUserList.add(mCustomerCatalog.getCurrentUserId())
 
-        val card = Card(cardName, mBoardDetails.assignedTo[0], cardAssignedUserList)
+        val card = Card(cardName, mCustomerCatalog.getCurrentUserId(), cardAssignedUserList)
 
         val cardsList = mBoardDetails.taskList[position].cards
         cardsList.add(card)
@@ -141,6 +167,36 @@ class TaskListActivity : BaseActivity() {
         showProgressDialog(resources.getString(R.string.please_wait))
         mBoardCatalog.addUpdateTaskList(this, mBoardDetails)
 
+    }
+
+    fun boardMembersDetailsList(list: ArrayList<User>){
+        mAssignedMemberDetailList = list
+
+        hideProgressDialog()
+
+        val addTaskList = Task(resources.getString(R.string.add_list))
+        mBoardDetails.taskList.add(addTaskList)
+
+        rv_task_list.layoutManager = LinearLayoutManager(
+            this, LinearLayoutManager.HORIZONTAL, false)
+
+        rv_task_list.setHasFixedSize(true)
+        val adapter = TaskListItemsAdapter(this, mBoardDetails.taskList)
+        rv_task_list.adapter = adapter
+    }
+
+    fun updateCardsInTaskList(taskListPosition: Int, cards: ArrayList<Card>){
+        mBoardDetails.taskList.removeAt(mBoardDetails.taskList.size - 1)
+
+        mBoardDetails.taskList[taskListPosition].cards = cards
+        showProgressDialog(resources.getString(R.string.please_wait))
+
+        mBoardCatalog.addUpdateTaskList(this, mBoardDetails)
+    }
+
+    companion object {
+        const val MEMBER_REQUEST_CODE: Int = 13
+        const val CARD_DETAILS_REQUEST_CODE: Int = 14
     }
 
 

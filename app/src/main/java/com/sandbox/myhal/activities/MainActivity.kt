@@ -141,6 +141,7 @@ class MainActivity : BaseActivity(), OnMapReadyCallback, NavigationView.OnNaviga
                 val mCustomerRepository = DataFactory.createCustomer()
                 val mCustomerCatalog = CustomerCatalog(mCustomerRepository)
                 mCustomerCatalog.signOut()
+                mSharedPreferences.edit().clear().apply()
                 val intent = Intent(this, AuthActivity::class.java)
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 startActivity(intent)

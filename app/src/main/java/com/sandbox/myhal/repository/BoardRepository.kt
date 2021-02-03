@@ -1,11 +1,10 @@
 package com.sandbox.myhal.repository
 
+import android.app.Activity
 import android.net.Uri
-import com.sandbox.myhal.activities.BaseActivity
-import com.sandbox.myhal.activities.BoardActivity
-import com.sandbox.myhal.activities.CreateBoardActivity
-import com.sandbox.myhal.activities.TaskListActivity
+import com.sandbox.myhal.activities.*
 import com.sandbox.myhal.models.Board
+import com.sandbox.myhal.models.User
 
 interface BoardRepository {
 
@@ -13,6 +12,7 @@ interface BoardRepository {
     fun uploadBoardImage(activity: CreateBoardActivity, fileUri: Uri?)
     fun getBoardsList(activity: BoardActivity, customerId: String)
     fun getBoardDetails(activity: TaskListActivity, documentId: String)
-    fun addUpdateTaskList(activity: TaskListActivity, board: Board )
+    fun addUpdateTaskList(activity: Activity, board: Board )
+    fun assignMemberToBoard(activity: MembersActivity, board: Board, user: User)
 
 }

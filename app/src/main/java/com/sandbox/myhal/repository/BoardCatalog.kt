@@ -1,11 +1,10 @@
 package com.sandbox.myhal.repository
 
+import android.app.Activity
 import android.net.Uri
-import com.sandbox.myhal.activities.BaseActivity
-import com.sandbox.myhal.activities.BoardActivity
-import com.sandbox.myhal.activities.CreateBoardActivity
-import com.sandbox.myhal.activities.TaskListActivity
+import com.sandbox.myhal.activities.*
 import com.sandbox.myhal.models.Board
+import com.sandbox.myhal.models.User
 
 class BoardCatalog(boardRepository: BoardRepository): BoardRepository  {
 
@@ -27,8 +26,14 @@ class BoardCatalog(boardRepository: BoardRepository): BoardRepository  {
         mBoardRepository.getBoardDetails(activity, documentId)
     }
 
-    override fun addUpdateTaskList(activity: TaskListActivity, board: Board) {
+    override fun addUpdateTaskList(activity: Activity, board: Board) {
         mBoardRepository.addUpdateTaskList(activity, board)
     }
+
+    override fun assignMemberToBoard(activity: MembersActivity, board: Board, user: User) {
+        return mBoardRepository.assignMemberToBoard(activity, board, user)
+    }
+
+
 
 }

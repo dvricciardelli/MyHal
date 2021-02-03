@@ -1,7 +1,9 @@
 package com.sandbox.myhal.activities
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
@@ -12,6 +14,7 @@ import androidx.core.view.GravityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.google.android.material.navigation.NavigationView
+import com.google.firebase.iid.FirebaseInstanceId
 import com.sandbox.myhal.R
 import com.sandbox.myhal.adapters.BoardItemsAdapter
 import com.sandbox.myhal.models.Board
@@ -28,6 +31,7 @@ import kotlinx.android.synthetic.main.board_list.*
 class BoardActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var mUserDetails: User
+    private lateinit var mSharedPreferences: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,9 +40,22 @@ class BoardActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedLis
         val mCustomerRepository = DataFactory.createCustomer()
         val mCustomerCatalog = CustomerCatalog(mCustomerRepository)
 
+        mSharedPreferences = this.getSharedPreferences(Constants.HAL_PREFERENCES, Context.MODE_PRIVATE)
+
+        val tokenUpdated = mSharedPreferences.getBoolean(Constants.FCM_TOKEN_UPDATED, false)
+
+        if(tokenUpdated){
+            showProgressDialog(resources.getString(R.string.please_wait))
+            mCustomerCatalog.loadUserData(this)
+        } else {
+            FirebaseInstanceId.getInstance()
+                .instanceId.addOnSuccessListener(this@BoardActivity){
+                    updateFCMToken(it.token)
+                }
+        }
+
         showProgressDialog(resources.getString(R.string.please_wait))
         mCustomerCatalog.loadUserData(this@BoardActivity)
-
 
         fab_create_board.setOnClickListener {
             val intent = Intent(this@BoardActivity, CreateBoardActivity::class.java)
@@ -189,6 +206,32 @@ class BoardActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedLis
         }
     }
 
+    fun tokenUpdateSuccess(){
+
+        val mCustomerRepository = DataFactory.createCustomer()
+        val mCustomerCatalog = CustomerCatalog(mCustomerRepository)
+
+        hideProgressDialog()
+        val editor: SharedPreferences.Editor = mSharedPreferences.edit()
+        editor.putBoolean(Constants.FCM_TOKEN_UPDATED, true)
+        editor.apply()
+        showProgressDialog(resources.getString(R.string.please_wait))
+
+        mCustomerCatalog.loadUserData(this)
+
+    }
+
+    private fun updateFCMToken(token: String){
+
+        val mCustomerRepository = DataFactory.createCustomer()
+        val mCustomerCatalog = CustomerCatalog(mCustomerRepository)
+
+        val userHashMap = HashMap<String, Any>()
+        userHashMap[Constants.FCM_TOKEN] = token
+
+        showProgressDialog(resources.getString(R.string.please_wait))
+        mCustomerCatalog.updateUserProfileData(this, userHashMap)
+    }
 
 
     companion object {

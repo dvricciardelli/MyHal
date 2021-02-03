@@ -9,11 +9,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
-import com.sandbox.myhal.activities.BaseActivity
-import com.sandbox.myhal.activities.BoardActivity
-import com.sandbox.myhal.activities.CreateBoardActivity
-import com.sandbox.myhal.activities.TaskListActivity
+import com.sandbox.myhal.activities.*
 import com.sandbox.myhal.models.Board
+import com.sandbox.myhal.models.User
 import com.sandbox.myhal.utils.Constants
 
 class FirestoreBoardRepository: BoardRepository {
@@ -132,7 +130,7 @@ class FirestoreBoardRepository: BoardRepository {
             }
     }
 
-    override fun addUpdateTaskList(activity: TaskListActivity, board: Board) {
+    override fun addUpdateTaskList(activity: Activity, board: Board) {
         val taskListHashMap = HashMap<String, Any>()
         taskListHashMap[Constants.TASK_LIST] = board.taskList
 
@@ -141,13 +139,36 @@ class FirestoreBoardRepository: BoardRepository {
             .update(taskListHashMap)
             .addOnSuccessListener {
                 Log.e(activity.javaClass.simpleName, "TaskList updated successful")
-                activity.addUpdateTaskListSuccess()
+                if(activity is TaskListActivity)
+                    activity.addUpdateTaskListSuccess()
+                else if (activity is CardDetailsActivity)
+                    activity.addUpdateTaskListSuccess()
             }.addOnFailureListener {
                 exception ->
-                activity.hideProgressDialog()
+                if(activity is TaskListActivity)
+                    activity.hideProgressDialog()
+                else if (activity is CardDetailsActivity)
+                    activity.hideProgressDialog()
                 Log.e(activity.javaClass.simpleName, "Error while adding task list", exception)
             }
     }
+
+    override fun assignMemberToBoard(activity: MembersActivity, board: Board, user: User) {
+        val assignedToHashMap = HashMap<String, Any>()
+        assignedToHashMap[Constants.ASSIGNED_TO] = board.assignedTo
+
+        mFireStore.collection(Constants.BOARDS)
+            .document(board.documentId)
+            .update(assignedToHashMap)
+            .addOnSuccessListener {
+                activity.memberAssignSuccess(user)
+            }.addOnFailureListener {
+                exception ->
+            activity.hideProgressDialog()
+            Log.e(activity.javaClass.simpleName, "Error while adding board list", exception)
+        }
+    }
+
 
     private fun getFileExtension(activity: Activity, uri: Uri?): String? {
 

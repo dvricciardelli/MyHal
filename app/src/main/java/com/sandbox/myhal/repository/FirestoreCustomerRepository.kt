@@ -18,10 +18,13 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 
 import com.sandbox.myhal.activities.*
+import com.sandbox.myhal.models.Board
 import com.sandbox.myhal.models.User
 import com.sandbox.myhal.utils.Constants
 
 class FirestoreCustomerRepository : CustomerRepository {
+
+    private val mFireStore = FirebaseFirestore.getInstance()
 
     override fun registerUser(activity: SignUpActivity, userInfo: User, password: String){
         Log.i("FireStore", "Registering a user")
@@ -55,6 +58,35 @@ class FirestoreCustomerRepository : CustomerRepository {
 
     }
 
+    override fun getAssignedMembersListDetails(
+        activity: Activity,
+        assignedTo: ArrayList<String>
+    ) {
+        mFireStore.collection(Constants.USERS)
+            .whereIn(Constants.ID, assignedTo)
+            .get()
+            .addOnSuccessListener {
+                    document ->
+                Log.e(activity.javaClass.simpleName, document.documents.toString())
+
+                val usersList : ArrayList<User> = ArrayList()
+
+                for (i in document.documents){
+                    val user = i.toObject(User::class.java)!!
+                    usersList.add(user)
+                }
+                if(activity is MembersActivity){
+                    activity.setupMembersList(usersList)
+                } else if (activity is TaskListActivity){
+                    activity.boardMembersDetailsList(usersList)
+                }
+
+            }.addOnFailureListener {
+                    e ->
+                Log.e(activity.javaClass.simpleName, "Error while creating a board.")
+            }
+    }
+
     override fun loadUserData(activity: BaseActivity) {
         val mFireStore = FirebaseFirestore.getInstance()
         mFireStore.collection(Constants.USERS)
@@ -70,9 +102,9 @@ class FirestoreCustomerRepository : CustomerRepository {
             }
     }
 
-    override fun updateUserProfileData(activity: MyProfileActivity, userHashMap: HashMap<String, Any>) {
+    override fun updateUserProfileData(activity: BaseActivity, userHashMap: HashMap<String, Any>) {
 
-        val mFireStore = FirebaseFirestore.getInstance()
+
         mFireStore.collection(Constants.USERS) // Collection Name
             .document(getCurrentUserId()) // Document ID
             .update(userHashMap) // A hashmap of fields which are to be updated.
@@ -82,11 +114,27 @@ class FirestoreCustomerRepository : CustomerRepository {
 
                 Toast.makeText(activity, "Profile updated successfully!", Toast.LENGTH_SHORT).show()
 
+                when(activity){
+                    is BoardActivity -> {
+                       activity.tokenUpdateSuccess()
+                    }
+                    is MyProfileActivity -> {
+                        activity.profileUpdateSuccess()
+                    }
+                }
                 // Notify the success result.
-                activity.profileUpdateSuccess()
+
             }
             .addOnFailureListener { e ->
-                activity.profileUpdateUnSuccessful(e)
+                when(activity){
+                    is BoardActivity -> {
+                        activity.hideProgressDialog()
+                    }
+                    is MyProfileActivity -> {
+                        activity.profileUpdateUnSuccessful(e)
+                    }
+                }
+
             }
     }
 
@@ -128,13 +176,36 @@ class FirestoreCustomerRepository : CustomerRepository {
         return getCurrentUserId() != ""
     }
 
+    override fun getMemberDetails(activity: MembersActivity, email: String) {
+        mFireStore.collection(Constants.USERS)
+            .whereEqualTo(Constants.EMAIL, email)
+            .get()
+            .addOnSuccessListener {
+                document ->
+                if(document.documents.size > 0){
+                    val user = document.documents[0].toObject(User::class.java)
+                    if (user != null) {
+                        activity.memberDetails(user)
+                    }
+                } else {
+                    activity.hideProgressDialog()
+                    activity.showErrorSnackBar("No such member found")
+                }
+            }.addOnFailureListener { e ->
+                Log.e(
+                    activity.javaClass.simpleName,
+                    "Error while getting user details"
+                )
+            }
+    }
+
+
     override fun signOut(){
         FirebaseAuth.getInstance().signOut()
     }
 
     override fun signInUser(activity: SignInActivity, userInfo: User, password: String){
         val auth: FirebaseAuth = FirebaseAuth.getInstance()
-        val mFireStore = FirebaseFirestore.getInstance()
 
         auth.signInWithEmailAndPassword(userInfo.email, password)
             .addOnCompleteListener(activity) { task ->
@@ -164,7 +235,7 @@ class FirestoreCustomerRepository : CustomerRepository {
 
     }
 
-    private fun getCurrentUserId(): String{
+    override fun getCurrentUserId(): String{
         var currentUser = FirebaseAuth.getInstance().currentUser
         var currentUserId = ""
 
